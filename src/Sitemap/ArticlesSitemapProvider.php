@@ -3,10 +3,14 @@
 namespace BuiltByBerry\LaravelArticles\Sitemap;
 
 use BuiltByBerry\LaravelArticles\Services\ArticlesService;
+use BuiltByBerry\LaravelArticles\Services\SeriesService;
 
 class ArticlesSitemapProvider
 {
-    public function __construct(private ArticlesService $articles) {}
+    public function __construct(
+        private ArticlesService $articles,
+        private SeriesService $series,
+    ) {}
 
     /**
      * @return list<array{loc: string, lastmod: ?string, changefreq: string, priority: string}>
@@ -37,7 +41,7 @@ class ArticlesSitemapProvider
             ];
         }
 
-        return $entries;
+        return array_merge($entries, $this->series->sitemapEntries());
     }
 
     private function lastmodFromPath(string $path): ?string

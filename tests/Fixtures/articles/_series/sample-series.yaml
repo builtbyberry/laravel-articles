@@ -1,0 +1,9 @@
+title: Sample Series
+description: |
+  A short series for package tests.
+articles:
+  - sample-article
+  - published-article
+index:
+  featured: true
+  order: 5

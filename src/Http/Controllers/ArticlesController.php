@@ -3,6 +3,7 @@
 namespace BuiltByBerry\LaravelArticles\Http\Controllers;
 
 use BuiltByBerry\LaravelArticles\Services\ArticlesService;
+use BuiltByBerry\LaravelArticles\Services\SeriesService;
 use BuiltByBerry\LaravelArticles\Support\SeoMeta;
 use Illuminate\Contracts\View\View;
 use Illuminate\Routing\Controller;
@@ -11,6 +12,7 @@ class ArticlesController extends Controller
 {
     public function __construct(
         private ArticlesService $articles,
+        private SeriesService $series,
         private SeoMeta $seo,
     ) {}
 
@@ -28,6 +30,30 @@ class ArticlesController extends Controller
 
         return view((string) config('articles.views.index', 'articles.index'), [
             'articles' => $this->articles->discover(),
+            'seriesSections' => $this->series->discoverForIndex(),
+        ]);
+    }
+
+    public function series(string $series): View
+    {
+        $payload = $this->series->resolveSeries($series);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        $host = rtrim((string) config('articles.seo.canonical_host'), '/');
+        $seriesPrefix = rtrim($this->series->seriesUrlPrefix(), '/');
+
+        $this->seo->set([
+            'title' => $payload['title'].' — '.config('articles.seo.index_title', 'Articles'),
+            'description' => $this->plainDescription($payload['description']) ?: config('articles.seo.index_description', ''),
+            'ogType' => 'website',
+            'canonical' => $host.$seriesPrefix.'/'.$payload['slug'],
+        ]);
+
+        return view((string) config('articles.views.series', 'articles.series'), [
+            'series' => $payload,
         ]);
     }
 
@@ -38,6 +64,7 @@ class ArticlesController extends Controller
 
         return view((string) config('articles.views.show', 'articles.show'), [
             'slug' => $slug,
+            'seriesContext' => $this->series->contextForArticle($slug),
             ...$payload,
         ]);
     }
@@ -109,5 +136,14 @@ class ArticlesController extends Controller
             'articlePublishedTime' => is_string($datePublished) ? $datePublished : null,
             'articleModifiedTime' => is_string($dateModified) ? $dateModified : null,
         ]);
+    }
+
+    private function plainDescription(string $markdown): string
+    {
+        $text = strip_tags($markdown);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\s+/', ' ', trim($text)) ?? '';
+
+        return mb_strlen($text) > 160 ? mb_substr($text, 0, 157).'...' : $text;
     }
 }

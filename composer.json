@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "builtbyberry/laravel-articles",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Git-native markdown articles for Laravel — folder discovery, frontmatter status, Atom feed, and sitemap.",
     "type": "library",
     "license": "MIT",

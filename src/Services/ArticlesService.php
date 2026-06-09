@@ -12,11 +12,18 @@ use Illuminate\Support\Str;
  */
 class ArticlesService
 {
+    private ?SeriesService $series = null;
+
     public function __construct(
         private MarkdownRenderer $renderer,
         private FrontmatterParser $frontmatter,
         private ChannelNotesStripper $channelNotes,
     ) {}
+
+    public function setSeriesService(SeriesService $series): void
+    {
+        $this->series = $series;
+    }
 
     public function contentPath(): string
     {
@@ -79,7 +86,7 @@ class ArticlesService
 
             $body = $this->channelNotes->strip($this->frontmatter->parse($raw)[1]);
 
-            $cards[] = [
+            $card = [
                 'slug' => $slug,
                 'title' => (string) ($meta['title'] ?? Str::headline($slug)),
                 'kind' => isset($meta['kind']) ? (string) $meta['kind'] : null,
@@ -91,6 +98,8 @@ class ArticlesService
                 'readingMinutes' => $this->renderer->readingMinutes($body),
                 'mtime' => filemtime($path) ?: 0,
             ];
+
+            $cards[] = $this->enrichCardWithSeries($card);
         }
 
         usort($cards, function (array $a, array $b): int {
@@ -113,5 +122,36 @@ class ArticlesService
     public function articlePath(string $slug): string
     {
         return $this->contentPath()."/{$slug}/article.md";
+    }
+
+    /**
+     * @param  array<string, mixed>  $card
+     * @return array<string, mixed>
+     */
+    private function enrichCardWithSeries(array $card): array
+    {
+        if ($this->series === null) {
+            return $card;
+        }
+
+        $seriesSlug = $this->series->articleSeriesSlug($card['slug']);
+
+        if ($seriesSlug === null) {
+            return $card;
+        }
+
+        $manifest = collect($this->series->discoverManifests())->firstWhere('slug', $seriesSlug);
+
+        if ($manifest === null) {
+            return $card;
+        }
+
+        $part = array_search($card['slug'], $manifest['articles'], true);
+
+        return array_merge($card, [
+            'seriesSlug' => $seriesSlug,
+            'seriesTitle' => $manifest['title'],
+            'seriesPart' => $part !== false ? $part + 1 : null,
+        ]);
     }
 }

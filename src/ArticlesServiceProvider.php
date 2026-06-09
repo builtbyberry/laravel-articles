@@ -5,6 +5,7 @@ namespace BuiltByBerry\LaravelArticles;
 use BuiltByBerry\LaravelArticles\Console\GenerateOgImagesCommand;
 use BuiltByBerry\LaravelArticles\Feed\AtomFeedBuilder;
 use BuiltByBerry\LaravelArticles\Services\ArticlesService;
+use BuiltByBerry\LaravelArticles\Services\SeriesService;
 use BuiltByBerry\LaravelArticles\Sitemap\ArticlesSitemapProvider;
 use BuiltByBerry\LaravelArticles\Support\SeoMeta;
 use Illuminate\Support\Facades\Route;
@@ -17,9 +18,14 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/articles.php', 'articles');
 
         $this->app->singleton(SeoMeta::class);
+        $this->app->singleton(SeriesService::class);
         $this->app->singleton(ArticlesService::class);
         $this->app->singleton(AtomFeedBuilder::class);
         $this->app->singleton(ArticlesSitemapProvider::class);
+
+        $this->app->afterResolving(ArticlesService::class, function (ArticlesService $articles): void {
+            $articles->setSeriesService($this->app->make(SeriesService::class));
+        });
     }
 
     public function boot(): void

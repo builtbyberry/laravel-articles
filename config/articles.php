@@ -31,6 +31,7 @@ return [
     'route_names' => [
         'index' => 'articles',
         'show' => 'articles.show',
+        'series' => 'articles.series',
         'feed' => 'articles.feed',
         'sitemap' => 'articles.sitemap',
     ],
@@ -67,6 +68,20 @@ return [
     'views' => [
         'index' => 'articles.index',
         'show' => 'articles.show',
+        'series' => 'articles.series',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Series manifests
+    |--------------------------------------------------------------------------
+    */
+
+    'series' => [
+        'path' => '_series',
+        'url_prefix' => '/articles/series',
+        'sitemap_changefreq' => 'monthly',
+        'sitemap_priority' => '0.85',
     ],
 
     /*

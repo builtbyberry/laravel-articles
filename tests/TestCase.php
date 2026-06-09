@@ -23,6 +23,9 @@ abstract class TestCase extends Orchestra
         $app['config']->set('articles.url_prefix', '/articles');
         $app['config']->set('articles.views.index', 'articles.index');
         $app['config']->set('articles.views.show', 'articles.show');
+        $app['config']->set('articles.views.series', 'articles.series');
+        $app['config']->set('articles.series.path', '_series');
+        $app['config']->set('articles.series.url_prefix', '/articles/series');
         $app['config']->set('articles.seo.canonical_host', 'https://example.test');
         $app['config']->set('articles.seo.index_title', 'Articles');
         $app['config']->set('articles.seo.index_description', 'Test articles.');

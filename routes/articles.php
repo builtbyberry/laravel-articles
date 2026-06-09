@@ -11,6 +11,11 @@ $routeNames = config('articles.route_names', []);
 Route::get($prefix === '' ? '/' : "/{$prefix}", [ArticlesController::class, 'index'])
     ->name($routeNames['index'] ?? 'articles');
 
+$seriesPrefix = trim((string) config('articles.series.url_prefix', '/articles/series'), '/');
+Route::get(($prefix === '' ? '' : "/{$prefix}").'/series/{series}', [ArticlesController::class, 'series'])
+    ->name($routeNames['series'] ?? 'articles.series')
+    ->where('series', '[a-z0-9\-]+');
+
 Route::get(($prefix === '' ? '' : "/{$prefix}").'/{slug}', [ArticlesController::class, 'show'])
     ->name($routeNames['show'] ?? 'articles.show')
     ->where('slug', '[a-z0-9\-]+');
