@@ -1,0 +1,69 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "builtbyberry/laravel-articles",
+    "version": "0.1.0",
+    "description": "Git-native markdown articles for Laravel — folder discovery, frontmatter status, Atom feed, and sitemap.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "articles",
+        "markdown",
+        "blog",
+        "git-native"
+    ],
+    "authors": [
+        {
+            "name": "Built by Berry",
+            "homepage": "https://builtbyberry.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^12.0|^13.0",
+        "illuminate/routing": "^12.0|^13.0",
+        "illuminate/view": "^12.0|^13.0",
+        "league/commonmark": "^2.4",
+        "symfony/yaml": "^7.0|^8.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.27",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "spatie/browsershot": "^5.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "BuiltByBerry\\LaravelArticles\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BuiltByBerry\\LaravelArticles\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BuiltByBerry\\LaravelArticles\\ArticlesServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/pest"
+        ],
+        "lint": [
+            "vendor/bin/pint"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

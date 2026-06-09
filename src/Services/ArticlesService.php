@@ -1,0 +1,117 @@
+<?php
+
+namespace BuiltByBerry\LaravelArticles\Services;
+
+use BuiltByBerry\LaravelArticles\Markdown\ChannelNotesStripper;
+use BuiltByBerry\LaravelArticles\Markdown\FrontmatterParser;
+use BuiltByBerry\LaravelArticles\Markdown\MarkdownRenderer;
+use Illuminate\Support\Str;
+
+/**
+ * Renders git-native articles at `{content_path}/<slug>/article.md`.
+ */
+class ArticlesService
+{
+    public function __construct(
+        private MarkdownRenderer $renderer,
+        private FrontmatterParser $frontmatter,
+        private ChannelNotesStripper $channelNotes,
+    ) {}
+
+    public function contentPath(): string
+    {
+        return (string) config('articles.content_path', base_path('articles'));
+    }
+
+    public function urlPrefix(): string
+    {
+        return (string) config('articles.url_prefix', '/articles');
+    }
+
+    /**
+     * @return array{html: string, toc: array<int, array{level: int, id: string, text: string}>, lastUpdated: ?string, readingMinutes: int, meta: array<string, mixed>}
+     */
+    public function render(string $slug): array
+    {
+        $path = $this->articlePath($slug);
+
+        if (! file_exists($path)) {
+            abort(404);
+        }
+
+        $raw = file_get_contents($path);
+        [$meta, $body] = $this->frontmatter->parse($raw);
+        $body = $this->channelNotes->strip($body);
+
+        $markdown = $this->renderer->rewriteLinks($body, $this->urlPrefix());
+        $html = $this->renderer->toHtml($markdown);
+        $toc = $this->renderer->extractToc($html);
+        $lastUpdated = $this->renderer->lastUpdated($path);
+        $readingMinutes = $this->renderer->readingMinutes($body);
+
+        return compact('html', 'toc', 'lastUpdated', 'readingMinutes', 'meta');
+    }
+
+    /**
+     * @param  list<string>|null  $statuses
+     * @return list<array{slug: string, title: string, kind: ?string, audience: ?string, description: ?string, ogImage: ?string, status: string, publishedAt: ?string, readingMinutes: ?int}>
+     */
+    public function discover(?array $statuses = null): array
+    {
+        $statuses ??= config('articles.discovery.index', ['ready', 'published']);
+        $root = $this->contentPath();
+
+        if (! is_dir($root)) {
+            return [];
+        }
+
+        $cards = [];
+
+        foreach (glob($root.'/*/article.md') ?: [] as $path) {
+            $slug = basename(dirname($path));
+            $raw = file_get_contents($path);
+            [$meta] = $this->frontmatter->parse($raw);
+
+            $status = (string) ($meta['status'] ?? 'draft');
+            if (! in_array($status, $statuses, true)) {
+                continue;
+            }
+
+            $body = $this->channelNotes->strip($this->frontmatter->parse($raw)[1]);
+
+            $cards[] = [
+                'slug' => $slug,
+                'title' => (string) ($meta['title'] ?? Str::headline($slug)),
+                'kind' => isset($meta['kind']) ? (string) $meta['kind'] : null,
+                'audience' => isset($meta['audience']) ? (string) $meta['audience'] : null,
+                'description' => isset($meta['description']) ? (string) $meta['description'] : null,
+                'ogImage' => isset($meta['og_image']) ? (string) $meta['og_image'] : null,
+                'status' => $status,
+                'publishedAt' => isset($meta['published_at']) ? (string) $meta['published_at'] : null,
+                'readingMinutes' => $this->renderer->readingMinutes($body),
+                'mtime' => filemtime($path) ?: 0,
+            ];
+        }
+
+        usort($cards, function (array $a, array $b): int {
+            $aDate = $a['publishedAt'] ?? '';
+            $bDate = $b['publishedAt'] ?? '';
+            if ($aDate !== $bDate) {
+                return strcmp($bDate, $aDate);
+            }
+
+            return $b['mtime'] <=> $a['mtime'];
+        });
+
+        return array_map(function (array $card): array {
+            unset($card['mtime']);
+
+            return $card;
+        }, $cards);
+    }
+
+    public function articlePath(string $slug): string
+    {
+        return $this->contentPath()."/{$slug}/article.md";
+    }
+}
