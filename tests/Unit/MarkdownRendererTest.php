@@ -83,3 +83,29 @@ test('leaves non-markdown links untouched', function () {
 
     expect($result)->toBe($markdown);
 });
+
+test('rewrites folder-style article.md links using the parent directory slug', function () {
+    $markdown = 'See [the next part](../second-slug/article.md) for more.';
+
+    $result = $this->renderer->rewriteLinks($markdown, '/articles');
+
+    expect($result)->toBe('See [the next part](/articles/second-slug) for more.');
+});
+
+test('preserves anchors on folder-style links', function () {
+    $markdown = '[jump](../guide/article.md#installation)';
+
+    $result = $this->renderer->rewriteLinks($markdown, '/articles');
+
+    expect($result)->toBe('[jump](/articles/guide#installation)');
+});
+
+test('escapes raw HTML when html_input is set to escape', function () {
+    config()->set('articles.markdown.html_input', 'escape');
+
+    $renderer = new MarkdownRenderer;
+    $html = $renderer->toHtml('Hello <script>alert(1)</script> world');
+
+    expect($html)->not->toContain('<script>');
+    expect($html)->toContain('&lt;script&gt;');
+});

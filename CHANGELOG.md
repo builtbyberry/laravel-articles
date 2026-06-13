@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **BREAKING:** Raised the minimum PHP version to 8.5 (was 8.3).
+- **BREAKING:** Raised the minimum PHP version to 8.4 (was 8.3).
 
 ### Added
 

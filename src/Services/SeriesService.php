@@ -11,6 +11,9 @@ class SeriesService
     /** @var array<string, string>|null */
     private ?array $articleToSeriesMap = null;
 
+    /** @var list<array{slug: string, title: string, description: string, articles: list<string>, index: array{featured: bool, order: int}}>|null */
+    private ?array $manifests = null;
+
     public function __construct(
         private ArticlesService $articles,
     ) {}
@@ -32,10 +35,14 @@ class SeriesService
      */
     public function discoverManifests(): array
     {
+        if ($this->manifests !== null) {
+            return $this->manifests;
+        }
+
         $root = $this->seriesPath();
 
         if (! is_dir($root)) {
-            return [];
+            return $this->manifests = [];
         }
 
         $manifests = [];
@@ -58,7 +65,7 @@ class SeriesService
 
         usort($manifests, fn (array $a, array $b): int => $a['index']['order'] <=> $b['index']['order']);
 
-        return $manifests;
+        return $this->manifests = $manifests;
     }
 
     /**
