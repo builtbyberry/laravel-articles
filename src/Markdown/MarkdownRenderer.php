@@ -22,7 +22,14 @@ class MarkdownRenderer
 
     public function __construct()
     {
+        $htmlInput = (string) config('articles.markdown.html_input', 'allow');
+        if (! in_array($htmlInput, ['allow', 'escape', 'strip'], true)) {
+            $htmlInput = 'allow';
+        }
+
         $environment = new Environment([
+            'html_input' => $htmlInput,
+            'allow_unsafe_links' => (bool) config('articles.markdown.allow_unsafe_links', true),
             'heading_permalink' => [
                 'html_class' => 'heading-anchor',
                 'id_prefix' => '',
@@ -99,9 +106,15 @@ class MarkdownRenderer
     public function lastUpdated(string $path, string $cachePrefix = 'articles'): ?string
     {
         $mtime = @filemtime($path);
-        $cacheKey = "{$cachePrefix}.last_updated:".md5($path).':'.($mtime ?: '0');
 
-        return Cache::rememberForever($cacheKey, function () use ($path, $mtime): ?string {
+        if (! config('articles.last_updated.use_git', true)) {
+            return $mtime ? date(DATE_ATOM, $mtime) : null;
+        }
+
+        $cacheKey = "{$cachePrefix}.last_updated:".md5($path).':'.($mtime ?: '0');
+        $ttl = (int) config('articles.last_updated.cache_ttl', 86400);
+
+        return Cache::remember($cacheKey, $ttl, function () use ($path, $mtime): ?string {
             $relative = ltrim(str_replace(base_path(), '', $path), '/');
             $command = sprintf(
                 'git -C %s log -1 --format=%%cI -- %s 2>/dev/null',
@@ -126,7 +139,15 @@ class MarkdownRenderer
                 $text = $matches[1];
                 $href = $matches[2];
                 $anchor = $matches[3];
-                $slug = pathinfo(basename($href), PATHINFO_FILENAME);
+
+                // Articles live at `<slug>/article.md`, so a folder-style link
+                // (`../other-slug/article.md`, which also resolves on GitHub)
+                // takes its slug from the parent directory. A flat link
+                // (`other-slug.md`) takes its slug from the filename.
+                $filename = pathinfo(basename($href), PATHINFO_FILENAME);
+                $slug = $filename === 'article'
+                    ? basename(dirname($href))
+                    : $filename;
                 $url = rtrim($urlPrefix, '/')."/{$slug}";
 
                 return "[{$text}]({$url}{$anchor})";

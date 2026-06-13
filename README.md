@@ -11,7 +11,7 @@ ships with your deploys.
 
 ## Requirements
 
-- PHP 8.5+
+- PHP 8.4+
 - Laravel 12 or 13
 
 ## Install
@@ -39,6 +39,29 @@ articles/
 Each article lives at `{content_path}/{slug}/article.md` with YAML frontmatter. Set
 `status` in frontmatter: `draft`, `ready`, `published`, or `archived`. Status controls
 where an article surfaces (see [Discovery statuses](#configuration)).
+
+### Cross-article links
+
+Link between articles with either a flat `slug.md` or the folder-style
+`../other-slug/article.md` (which also resolves when the markdown is viewed on
+GitHub). Both rewrite to `{url_prefix}/other-slug`; anchors (`#section`) are
+preserved. Non-`.md` links are left untouched.
+
+### Stripped sections
+
+Headings listed in `strip_sections` (default `['Channel notes']`) are removed from
+the **rendered page** — everything from `## <heading>` to the end of the document,
+plus a preceding `---`. The source `article.md` is never modified, so the section
+still appears in your editor, in git, and in GitHub's view. Matching is
+heading-prefix based and whitespace-insensitive (`Channel notes` also strips
+`## Channel notes (internal)`). Set `strip_sections` to `[]` to disable.
+
+### Markdown and untrusted input
+
+Articles are git-native and author-trusted by default, so the renderer allows raw
+HTML and all link schemes. If you ever render untrusted markdown, set
+`markdown.html_input` to `escape` (or `strip`) and `markdown.allow_unsafe_links` to
+`false`.
 
 ## Series
 
@@ -73,10 +96,17 @@ When `articles.routes.enabled` is true (default):
 - `GET /feed.xml` — Atom feed (`published` only)
 - `GET /sitemap.xml` — sitemap (`published` + featured series landings)
 
+Only the index, feed, and sitemap respect `status`. The show route renders **any**
+status by slug, so a `draft` or `archived` article is reachable by anyone who knows
+its URL — it's simply unlisted, not access-controlled. Gate it in your own
+middleware if drafts must be private.
+
 ## Custom UI (Inertia, SPA, or your own Blade)
 
 Disable the package routes and bind your own controllers to `ArticlesService` and
-`SeriesService` — both are registered as singletons in the container.
+`SeriesService` — both are resolvable from the container (bound as `scoped`, so they
+reset per request under Octane). If you wire them into your own long-lived singleton,
+resolve them per request rather than caching the instance.
 
 ```php
 // config/articles.php
@@ -124,6 +154,11 @@ All keys live in `config/articles.php` after publishing. The most useful ones:
 | `feed.*` | enabled, `/feed.xml`, title… | Atom feed path and metadata. |
 | `sitemap.*` | enabled, `/sitemap.xml`, priorities… | Sitemap path, changefreq, priority. |
 | `github_edit_base` | `null` | Optional base URL for "edit on GitHub" links. |
+| `strip_sections` | `['Channel notes']` | Headings whose section is dropped from the rendered page (see below). |
+| `markdown.html_input` | `allow` | CommonMark HTML handling: `allow`, `escape`, or `strip`. |
+| `markdown.allow_unsafe_links` | `true` | When `false`, blocks `javascript:` and similar link schemes. |
+| `last_updated.use_git` | `true` | Prefer git commit date for "last updated"; `false` uses file mtime only. |
+| `last_updated.cache_ttl` | `86400` | Seconds to cache the resolved last-updated value. |
 | `og.*` | view, output dirs, kind labels | OG image generation (see below). |
 
 ## OG images (optional)

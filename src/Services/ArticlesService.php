@@ -77,14 +77,14 @@ class ArticlesService
         foreach (glob($root.'/*/article.md') ?: [] as $path) {
             $slug = basename(dirname($path));
             $raw = file_get_contents($path);
-            [$meta] = $this->frontmatter->parse($raw);
+            [$meta, $rawBody] = $this->frontmatter->parse($raw);
 
             $status = (string) ($meta['status'] ?? 'draft');
             if (! in_array($status, $statuses, true)) {
                 continue;
             }
 
-            $body = $this->channelNotes->strip($this->frontmatter->parse($raw)[1]);
+            $body = $this->channelNotes->strip($rawBody);
 
             $card = [
                 'slug' => $slug,

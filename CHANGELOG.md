@@ -9,10 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **BREAKING:** Raised the minimum PHP version to 8.5 (was 8.3).
+- **BREAKING:** Raised the minimum PHP version to 8.4 (was 8.3).
+- `SeoMeta`, `SeriesService`, `ArticlesService`, `AtomFeedBuilder`, and
+  `ArticlesSitemapProvider` are now bound as `scoped` (was `singleton`) so their
+  per-request state and memo caches reset between requests under Laravel Octane.
+  `MarkdownRenderer` is now an explicit `singleton`.
+- Cross-article links may now use the folder-style `../slug/article.md` form (in
+  addition to flat `slug.md`), which also resolves when viewed on GitHub.
 
 ### Added
 
+- `strip_sections` config to choose which headings are removed from the rendered
+  page (default `['Channel notes']`; set to `[]` to disable).
+- `markdown` config (`html_input`, `allow_unsafe_links`) to harden rendering for
+  untrusted input; permissive by default for trusted authors.
+- `last_updated` config (`use_git`, `cache_ttl`) to skip the git/`shell_exec`
+  lookup on hosts without a git tree and to bound the cache entry lifetime.
 - MIT `LICENSE` file.
 - GitHub Actions CI running the test suite and Pint across Laravel 12 and 13.
 - `CHANGELOG.md` and `CONTRIBUTING.md`.

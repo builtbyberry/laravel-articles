@@ -5,6 +5,7 @@ kind: announcement
 status: published
 description: "Shows in feed and sitemap."
 published_at: "2026-05-01"
+og_image: "/images/og/articles/published-article.png"
 ---
 
 # Published Article

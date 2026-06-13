@@ -61,6 +61,54 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Stripped sections
+    |--------------------------------------------------------------------------
+    |
+    | Headings whose section — from the `## <heading>` line to the end of the
+    | document — are removed from the RENDERED article only. The source markdown
+    | file on disk is never modified. Matching is heading-prefix based and
+    | whitespace-insensitive (e.g. "Channel notes" also matches "## Channel
+    | notes (internal)"). Set to an empty array to disable stripping entirely.
+    |
+    */
+
+    'strip_sections' => ['Channel notes'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown rendering
+    |--------------------------------------------------------------------------
+    |
+    | Passed straight to the CommonMark environment. Articles are git-native and
+    | author-trusted by default, so raw HTML and links pass through. If you ever
+    | render untrusted markdown, set `html_input` to 'escape' (or 'strip') and
+    | `allow_unsafe_links` to false.
+    |
+    */
+
+    'markdown' => [
+        'html_input' => 'allow',        // 'allow' | 'escape' | 'strip'
+        'allow_unsafe_links' => true,   // false blocks javascript: and similar
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Last-updated resolution
+    |--------------------------------------------------------------------------
+    |
+    | "Last updated" prefers the article's last git commit date, falling back to
+    | the file mtime. On hosts without a .git tree or without shell_exec (Vapor,
+    | artifact-built containers), set `use_git` to false to skip the shell.
+    |
+    */
+
+    'last_updated' => [
+        'use_git' => true,
+        'cache_ttl' => 86400,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Views
     |--------------------------------------------------------------------------
     */
