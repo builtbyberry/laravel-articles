@@ -109,3 +109,30 @@ test('escapes raw HTML when html_input is set to escape', function () {
     expect($html)->not->toContain('<script>');
     expect($html)->toContain('&lt;script&gt;');
 });
+
+test('falls back to allow when html_input is misconfigured', function () {
+    config()->set('articles.markdown.html_input', 'escaped'); // typo, not a valid value
+
+    $renderer = new MarkdownRenderer;
+
+    // Invalid value must not crash the CommonMark environment; raw HTML passes
+    // through as it does under the default 'allow'.
+    expect($renderer->toHtml('<div>raw</div>'))->toContain('<div>raw</div>');
+});
+
+test('uses file mtime and skips git when use_git is disabled', function () {
+    config()->set('articles.last_updated.use_git', false);
+
+    $path = __DIR__.'/../Fixtures/articles/published-article/article.md';
+    $expected = date(DATE_ATOM, filemtime($path));
+
+    // With git disabled the result is the file mtime in ATOM format — not the
+    // git commit date the shell path would return.
+    expect($this->renderer->lastUpdated($path))->toBe($expected);
+});
+
+test('returns null last-updated for a missing file when use_git is disabled', function () {
+    config()->set('articles.last_updated.use_git', false);
+
+    expect($this->renderer->lastUpdated('/no/such/article.md'))->toBeNull();
+});

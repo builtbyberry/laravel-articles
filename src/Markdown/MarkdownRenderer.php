@@ -22,8 +22,13 @@ class MarkdownRenderer
 
     public function __construct()
     {
+        $htmlInput = (string) config('articles.markdown.html_input', 'allow');
+        if (! in_array($htmlInput, ['allow', 'escape', 'strip'], true)) {
+            $htmlInput = 'allow';
+        }
+
         $environment = new Environment([
-            'html_input' => (string) config('articles.markdown.html_input', 'allow'),
+            'html_input' => $htmlInput,
             'allow_unsafe_links' => (bool) config('articles.markdown.allow_unsafe_links', true),
             'heading_permalink' => [
                 'html_class' => 'heading-anchor',
