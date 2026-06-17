@@ -11,7 +11,7 @@ ships with your deploys.
 
 ## Requirements
 
-- PHP 8.4+
+- PHP 8.5+ (the package targets 8.5 so it can use current PHP language features)
 - Laravel 12 or 13
 
 ## Install
@@ -190,7 +190,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports and pull requests are welcom
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+See [CHANGELOG.md](CHANGELOG.md) for release history and [UPGRADING.md](UPGRADING.md)
+for version-to-version upgrade notes.
 
 ## License
 

@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-17
+
 ### Changed
 
-- **BREAKING:** Raised the minimum PHP version to 8.4 (was 8.3).
+- **BREAKING:** Raised the minimum PHP version to 8.5 (was 8.3) so the package can
+  adopt PHP 8.5 language features.
 - `SeoMeta`, `SeriesService`, `ArticlesService`, `AtomFeedBuilder`, and
   `ArticlesSitemapProvider` are now bound as `scoped` (was `singleton`) so their
   per-request state and memo caches reset between requests under Laravel Octane.
@@ -54,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   frontmatter status (`draft`/`ready`/`published`/`archived`), CommonMark rendering,
   Atom feed, sitemap, SEO metadata, and OG image generation command.
 
-[Unreleased]: https://github.com/builtbyberry/laravel-articles/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/builtbyberry/laravel-articles/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/builtbyberry/laravel-articles/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/builtbyberry/laravel-articles/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/builtbyberry/laravel-articles/releases/tag/v0.1.0
