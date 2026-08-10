@@ -16,3 +16,7 @@ When to reach for something new in your Laravel app, start here.
 
 ### LinkedIn cut
 This should not appear in rendered HTML.
+
+### Newsletter pitch
+
+Read the **practical breakdown** and use it in your next Laravel project.

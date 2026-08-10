@@ -46,3 +46,15 @@ test('does not strip non-configured headings', function () {
 
     expect($this->stripper->strip($body))->toContain('Kept.');
 });
+
+test('does not treat a heading inside a fenced block as a stripped section', function () {
+    $body = "Body.\n\n```markdown\n## Channel notes\n\nExample.\n```\n\nKept.";
+
+    expect($this->stripper->strip($body))->toBe($body);
+});
+
+test('does not close a fenced block on a fence with an info string', function () {
+    $body = "```markdown\n```php\n## Channel notes\n\nExample.\n```";
+
+    expect($this->stripper->strip($body))->toBe($body);
+});

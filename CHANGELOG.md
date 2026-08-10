@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ArticlesService::channelNote()` for status-aware retrieval of terminal channel
+  notes with canonical article metadata and source Markdown.
+
+### Changed
+
+- Stripped-section matching now ignores heading-like text inside fenced code blocks.
+
+### Security
+
+- Article paths now reject traversal attempts while preserving existing
+  single-directory slug names.
+
 ## [0.3.0] - 2026-06-17
 
 ### Changed

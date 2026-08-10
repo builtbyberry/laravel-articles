@@ -56,6 +56,36 @@ still appears in your editor, in git, and in GitHub's view. Matching is
 heading-prefix based and whitespace-insensitive (`Channel notes` also strips
 `## Channel notes (internal)`). Set `strip_sections` to `[]` to disable.
 
+Channel notes may also be consumed without exposing them on the rendered page. Put
+each entry under a level-three heading in the terminal channel-notes section:
+
+```markdown
+## Channel notes
+
+### Newsletter pitch
+
+Read the **full article** and share it with your team.
+```
+
+Retrieve an entry by article slug and normalized heading key. The optional status
+list prevents unpublished content from crossing an application boundary:
+
+```php
+$note = $articles->channelNote(
+    'my-article',
+    'newsletter-pitch',
+    ['published'],
+);
+```
+
+The result contains the canonical article slug, title, description, status,
+publication date and URL plus the entry's key, heading and unrendered Markdown.
+Missing entries return `null`; missing, unsafe or disallowed article slugs return
+404. Duplicate normalized headings keep the first entry. Heading-like text inside
+fenced code blocks is preserved as content rather than parsed as structure.
+The returned Markdown is author-controlled source; render it with the package's
+configured `MarkdownRenderer` when HTML is needed.
+
 ### Markdown and untrusted input
 
 Articles are git-native and author-trusted by default, so the renderer allows raw
@@ -128,7 +158,8 @@ Route::get('/writing/{slug}', function (string $slug, ArticlesService $articles)
 ```
 
 `discover()` returns article cards (slug, title, status, meta); `render($slug)` returns
-`['html' => ..., 'meta' => ..., ...]` with the parsed frontmatter and rendered body.
+`['html' => ..., 'meta' => ..., ...]` with the parsed frontmatter and rendered body;
+and `channelNote($slug, $key, $statuses)` returns one source-Markdown channel entry.
 
 ## Configuration
 

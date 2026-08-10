@@ -2,6 +2,7 @@
 
 namespace BuiltByBerry\LaravelArticles\Services;
 
+use BuiltByBerry\LaravelArticles\Markdown\ChannelNotesParser;
 use BuiltByBerry\LaravelArticles\Markdown\ChannelNotesStripper;
 use BuiltByBerry\LaravelArticles\Markdown\FrontmatterParser;
 use BuiltByBerry\LaravelArticles\Markdown\MarkdownRenderer;
@@ -14,11 +15,16 @@ class ArticlesService
 {
     private ?SeriesService $series = null;
 
+    private ChannelNotesParser $channelNotesParser;
+
     public function __construct(
         private MarkdownRenderer $renderer,
         private FrontmatterParser $frontmatter,
         private ChannelNotesStripper $channelNotes,
-    ) {}
+        ?ChannelNotesParser $channelNotesParser = null,
+    ) {
+        $this->channelNotesParser = $channelNotesParser ?? new ChannelNotesParser;
+    }
 
     public function setSeriesService(SeriesService $series): void
     {
@@ -119,8 +125,63 @@ class ArticlesService
         }, $cards);
     }
 
+    /**
+     * @param  list<string>|null  $statuses
+     * @return array{slug: string, title: string, description: ?string, status: string, publishedAt: ?string, url: string, key: string, heading: string, markdown: string}|null
+     */
+    public function channelNote(string $slug, string $key, ?array $statuses = null): ?array
+    {
+        $path = $this->articlePath($slug);
+
+        if (! file_exists($path)) {
+            abort(404);
+        }
+
+        $raw = file_get_contents($path);
+
+        if (! is_string($raw)) {
+            abort(404);
+        }
+
+        [$meta, $body] = $this->frontmatter->parse($raw);
+        $status = (string) ($meta['status'] ?? 'draft');
+        $statuses ??= config('articles.discovery.index', ['ready', 'published']);
+
+        if (! in_array($status, $statuses, true)) {
+            abort(404);
+        }
+
+        $normalizedKey = Str::slug($key);
+        $note = $this->channelNotesParser->extract($body)[$normalizedKey] ?? null;
+
+        if ($note === null) {
+            return null;
+        }
+
+        return [
+            'slug' => $slug,
+            'title' => (string) ($meta['title'] ?? Str::headline($slug)),
+            'description' => isset($meta['description']) ? (string) $meta['description'] : null,
+            'status' => $status,
+            'publishedAt' => isset($meta['published_at']) ? (string) $meta['published_at'] : null,
+            'url' => rtrim($this->urlPrefix(), '/').'/'.$slug,
+            ...$note,
+        ];
+    }
+
     public function articlePath(string $slug): string
     {
+        if (
+            $slug === ''
+            || $slug === '.'
+            || $slug === '..'
+            || str_contains($slug, '/')
+            || str_contains($slug, '\\')
+            || str_contains($slug, "\0")
+        ) {
+            abort(404);
+        }
+
         return $this->contentPath()."/{$slug}/article.md";
     }
 

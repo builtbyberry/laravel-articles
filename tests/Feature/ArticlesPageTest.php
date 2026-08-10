@@ -1,6 +1,10 @@
 <?php
 
+use BuiltByBerry\LaravelArticles\Markdown\ChannelNotesStripper;
+use BuiltByBerry\LaravelArticles\Markdown\FrontmatterParser;
+use BuiltByBerry\LaravelArticles\Markdown\MarkdownRenderer;
 use BuiltByBerry\LaravelArticles\Services\ArticlesService;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 test('renders the articles index', function () {
     $this->get(route('articles'))->assertOk();
@@ -41,4 +45,50 @@ test('discover hides draft articles from the index by default', function () {
     foreach ($service->discover() as $card) {
         expect($card['status'])->toBeIn(['ready', 'published']);
     }
+});
+
+test('retrieves a channel note with canonical article metadata', function () {
+    $note = app(ArticlesService::class)->channelNote('sample-article', 'Newsletter pitch');
+
+    expect($note)
+        ->slug->toBe('sample-article')
+        ->title->toBe('Sample Article Title')
+        ->description->toBe('A sample article for package tests.')
+        ->status->toBe('ready')
+        ->url->toBe('/articles/sample-article')
+        ->key->toBe('newsletter-pitch')
+        ->markdown->toContain('**practical breakdown**');
+});
+
+test('channel notes respect status filters and safe article slugs', function () {
+    expect(app(ArticlesService::class)->channelNote('sample-article', 'missing'))->toBeNull();
+
+    $this->get('/articles/../sample-article')->assertNotFound();
+
+    expect(fn () => app(ArticlesService::class)->channelNote('draft-article', 'newsletter-pitch', ['published']))
+        ->toThrow(NotFoundHttpException::class)
+        ->and(fn () => app(ArticlesService::class)->channelNote('../sample-article', 'newsletter-pitch'))
+        ->toThrow(NotFoundHttpException::class);
+});
+
+test('article path safety preserves existing single-directory slug names', function () {
+    $service = app(ArticlesService::class);
+
+    expect($service->articlePath('Legacy_Article'))
+        ->toEndWith('/Legacy_Article/article.md')
+        ->and(fn () => $service->articlePath('nested/article'))
+        ->toThrow(NotFoundHttpException::class)
+        ->and(fn () => $service->articlePath('nested\\article'))
+        ->toThrow(NotFoundHttpException::class);
+});
+
+test('articles service remains compatible with its original constructor', function () {
+    $service = new ArticlesService(
+        app(MarkdownRenderer::class),
+        app(FrontmatterParser::class),
+        new ChannelNotesStripper,
+    );
+
+    expect($service->channelNote('sample-article', 'newsletter-pitch'))
+        ->key->toBe('newsletter-pitch');
 });
