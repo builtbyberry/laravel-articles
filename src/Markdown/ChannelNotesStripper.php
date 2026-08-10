@@ -4,6 +4,13 @@ namespace BuiltByBerry\LaravelArticles\Markdown;
 
 class ChannelNotesStripper
 {
+    private ChannelNotesParser $parser;
+
+    public function __construct(?ChannelNotesParser $parser = null)
+    {
+        $this->parser = $parser ?? new ChannelNotesParser;
+    }
+
     /**
      * Drop everything from a configured section heading (e.g. `## Channel notes`)
      * onward, plus the `---` separator that typically precedes it.
@@ -16,24 +23,22 @@ class ChannelNotesStripper
     {
         $headings = array_values(array_filter(
             (array) config('articles.strip_sections', ['Channel notes']),
-            fn ($heading): bool => is_string($heading) && $heading !== '',
+            fn (mixed $heading): bool => is_string($heading) && $heading !== '',
         ));
 
         if ($headings === []) {
             return $body;
         }
 
-        $alternatives = array_map(function (string $heading): string {
-            $words = array_map(
-                fn (string $word): string => preg_quote($word, '/'),
-                preg_split('/\s+/', trim($heading)) ?: [],
-            );
+        $sectionOffset = $this->parser->sectionOffset($body, $headings);
 
-            return implode('\s+', $words);
-        }, $headings);
+        if ($sectionOffset === null) {
+            return $body;
+        }
 
-        $pattern = '/\n(?:---\s*\n)?##\s+(?:'.implode('|', $alternatives).')\b.*$/is';
+        $beforeSection = substr($body, 0, $sectionOffset);
+        $withoutSeparator = preg_replace('/(?:\r?\n)?---\s*\r?\n\z/', "\n", $beforeSection);
 
-        return preg_replace($pattern, "\n", $body) ?? $body;
+        return $withoutSeparator ?? $beforeSection;
     }
 }
